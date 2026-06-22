@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const nodemailer = require("nodemailer");
 const { OAuth2Client } = require('google-auth-library');
@@ -12,8 +13,8 @@ const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 // ==========================================
 // 🔴 EMAIL CREDENTIALS 🔴
 // ==========================================
-const EMAIL_USER = 'gopalharsh8586@gmail.com';
-const EMAIL_PASS = 'ineetspjrzhqikfg';
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
 
 // ==========================================
 const path = require("path");
@@ -44,8 +45,10 @@ app.use(session({
   secret: 'yourSuperSecretKeyHere',
   resave: false,
   saveUninitialized: true,
-  cookie: { maxAge: 1000 * 60 * 60,  
-    secure: false  } 
+  cookie: {
+    maxAge: 1000 * 60 * 60,
+    secure: false
+  }
 }));
 
 // Home Page Setup
@@ -64,58 +67,58 @@ app.get("/signup", (req, res) => {
 
 // --- GOOGLE SIGN-IN FLOW ---
 app.post("/api/auth/google", async (req, res) => {
-    try {
-        const { credential } = req.body;
-        
-        let email, given_name, family_name, picture;
-        
-        if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
-            console.log("⚠️ Skipping REAL Google Verify (Waiting for Client ID). Mocking logic.");
-            const payload = JSON.parse(Buffer.from(credential.split('.')[1], 'base64').toString('utf-8'));
-            email = payload.email;
-            given_name = payload.given_name;
-            family_name = payload.family_name;
-            picture = payload.picture;
-        } else {
-            const ticket = await googleClient.verifyIdToken({
-                idToken: credential,
-                audience: GOOGLE_CLIENT_ID,
-            });
-            const payload = ticket.getPayload();
-            email = payload.email;
-            given_name = payload.given_name;
-            family_name = payload.family_name;
-            picture = payload.picture;
-        }
+  try {
+    const { credential } = req.body;
 
-        let user = await Info.findOne({ email });
+    let email, given_name, family_name, picture;
 
-        if (!user) {
-            user = new Info({
-                firstname: given_name,
-                lastname: family_name || '',
-                email: email,
-                profilePic: picture
-            });
-            await user.save();
-            console.log("✅ Auto-registered new Google user:", email);
-        } else {
-            // Update profile pic if it changed
-            if (picture && user.profilePic !== picture) {
-                user.profilePic = picture;
-                await user.save();
-            }
-            console.log("✅ Logged in existing Google user:", email);
-        }
-
-        req.session.firstName = user.firstname;
-        req.session.profilePic = user.profilePic;
-        res.json({ success: true, redirectUrl: '/' });
-
-    } catch (error) {
-        console.error("Google Auth Error:", error);
-        res.status(400).json({ success: false, message: "Google authentication failed." });
+    if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
+      console.log("⚠️ Skipping REAL Google Verify (Waiting for Client ID). Mocking logic.");
+      const payload = JSON.parse(Buffer.from(credential.split('.')[1], 'base64').toString('utf-8'));
+      email = payload.email;
+      given_name = payload.given_name;
+      family_name = payload.family_name;
+      picture = payload.picture;
+    } else {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      email = payload.email;
+      given_name = payload.given_name;
+      family_name = payload.family_name;
+      picture = payload.picture;
     }
+
+    let user = await Info.findOne({ email });
+
+    if (!user) {
+      user = new Info({
+        firstname: given_name,
+        lastname: family_name || '',
+        email: email,
+        profilePic: picture
+      });
+      await user.save();
+      console.log("✅ Auto-registered new Google user:", email);
+    } else {
+      // Update profile pic if it changed
+      if (picture && user.profilePic !== picture) {
+        user.profilePic = picture;
+        await user.save();
+      }
+      console.log("✅ Logged in existing Google user:", email);
+    }
+
+    req.session.firstName = user.firstname;
+    req.session.profilePic = user.profilePic;
+    res.json({ success: true, redirectUrl: '/' });
+
+  } catch (error) {
+    console.error("Google Auth Error:", error);
+    res.status(400).json({ success: false, message: "Google authentication failed." });
+  }
 });
 
 // --- OTP Signup Flow ---
@@ -126,7 +129,7 @@ app.post("/api/send-otp", async (req, res) => {
     if (password !== confirmpassword) {
       return res.status(400).json({ success: false, message: "Passwords do not match." });
     }
-    
+
     // Sanitize phone number (remove spaces)
     phone = phone.replace(/\s+/g, '');
 
@@ -134,8 +137,8 @@ app.post("/api/send-otp", async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ success: false, message: "Email already registered." });
     }
-    
-    const existingPhone = await Info.findOne({ phone: Number(phone.replace(/\D/g, '')) }).catch(()=>null);
+
+    const existingPhone = await Info.findOne({ phone: Number(phone.replace(/\D/g, '')) }).catch(() => null);
     if (existingPhone) {
       return res.status(400).json({ success: false, message: "Phone already registered." });
     }
@@ -159,16 +162,16 @@ app.post("/api/send-otp", async (req, res) => {
 
     // 1️⃣ Send Email via Nodemailer
     try {
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: { user: EMAIL_USER, pass: EMAIL_PASS }
-        });
-        
-        const mailOptions = {
-            from: `"VegBites" <${EMAIL_USER}>`,
-            to: email,
-            subject: "Your VegBites Verification Code",
-            html: `
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: EMAIL_USER, pass: EMAIL_PASS }
+      });
+
+      const mailOptions = {
+        from: `"VegBites" <${EMAIL_USER}>`,
+        to: email,
+        subject: "Your VegBites Verification Code",
+        html: `
                 <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
                     <h2>Welcome to VegBites! 🥗</h2>
                     <p>Your verification code is:</p>
@@ -176,20 +179,18 @@ app.post("/api/send-otp", async (req, res) => {
                     <p>This code will expire in 10 minutes.</p>
                 </div>
             `
-        };
-        
-        if (EMAIL_USER !== 'YOUR_EMAIL@gmail.com') {
-            await transporter.sendMail(mailOptions);
-            console.log("✅ Email sent successfully");
-        } else {
-            console.log("⚠️ Skipping REAL Email (Waiting for API Keys)");
-        }
+      };
+
+      if (EMAIL_USER !== 'YOUR_EMAIL@gmail.com') {
+        await transporter.sendMail(mailOptions);
+        console.log("✅ Email sent successfully");
+      } else {
+        console.log("⚠️ Skipping REAL Email (Waiting for API Keys)");
+      }
     } catch (err) {
-        console.error("❌ Email failed to send:", err.message);
+      console.error("❌ Email failed to send:", err.message);
+      return res.status(500).json({ success: false, message: "Failed to send email." });
     }
-
-
-
 
     res.json({ success: true, message: "OTP sent successfully!" });
   } catch (error) {
@@ -216,10 +217,10 @@ app.post("/api/verify-otp-and-signup", async (req, res) => {
     }
 
     // OTP Verified! Save user.
-    
+
     // Convert phone cleanly to number for MongoDB schema
     let cleanPhone = parseInt(pending.phone.replace(/\D/g, ''), 10);
-    
+
     const Entries = new Info({
       firstname: pending.firstname,
       lastname: pending.lastname,
@@ -228,7 +229,7 @@ app.post("/api/verify-otp-and-signup", async (req, res) => {
       password: pending.password,
       cnfpassword: pending.confirmpassword,
     });
-    
+
     await Entries.save();
     req.session.firstName = pending.firstname;
     delete req.session.pendingSignup;
@@ -238,11 +239,11 @@ app.post("/api/verify-otp-and-signup", async (req, res) => {
     console.error("Verify OTP error:", error);
     let errorMsg = "Server error during registration.";
     if (error.code === 11000) {
-        errorMsg = "Account with this Email or Phone already exists.";
+      errorMsg = "Account with this Email or Phone already exists.";
     } else if (error.name === 'ValidationError') {
-        errorMsg = Object.values(error.errors).map(val => val.message).join(', ');
+      errorMsg = Object.values(error.errors).map(val => val.message).join(', ');
     } else {
-        errorMsg = error.message;
+      errorMsg = error.message;
     }
     res.status(500).json({ success: false, message: errorMsg });
   }
@@ -255,37 +256,37 @@ app.get("/login", (req, res) => {
 
 // --- FORGOT PASSWORD FLOW ---
 app.get("/forgot-password", (req, res) => {
-    res.render("forgot");
+  res.render("forgot");
 });
 
 app.post("/api/forgot/send-otp", async (req, res) => {
-    const { email } = req.body;
-    try {
-        const user = await Info.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ success: false, message: "No account found with that email." });
-        }
-        
-        // Block Google Users from rewriting password this way as they don't have passwords native to vegbites natively
-        if (!user.password && user.profilePic) {
-            return res.status(403).json({ success: false, message: "Please log in with 'Continue with Google' instead of resetting password." });
-        }
+  const { email } = req.body;
+  try {
+    const user = await Info.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "No account found with that email." });
+    }
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        // Temporarily store in node memory or session
-        req.session.resetEmail = email;
-        req.session.resetOtp = otp;
+    // Block Google Users from rewriting password this way as they don't have passwords native to vegbites natively
+    if (!user.password && user.profilePic) {
+      return res.status(403).json({ success: false, message: "Please log in with 'Continue with Google' instead of resetting password." });
+    }
 
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: { user: EMAIL_USER, pass: EMAIL_PASS }
-        });
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Temporarily store in node memory or session
+    req.session.resetEmail = email;
+    req.session.resetOtp = otp;
 
-        await transporter.sendMail({
-            from: `"VegBites Recovery" <${EMAIL_USER}>`,
-            to: email,
-            subject: 'Password Reset OTP - VegBites',
-            html: `
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: EMAIL_USER, pass: EMAIL_PASS }
+    });
+
+    await transporter.sendMail({
+      from: `"VegBites Recovery" <${EMAIL_USER}>`,
+      to: email,
+      subject: 'Password Reset OTP - VegBites',
+      html: `
                 <div style="font-family: sans-serif; text-align: center; max-width: 500px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
                     <img src="https://ui-avatars.com/api/?name=VB&background=22C55E&color=fff&rounded=true" alt="VegBites Logo" style="width: 50px;">
                     <h2>Reset Your Password</h2>
@@ -294,77 +295,77 @@ app.post("/api/forgot/send-otp", async (req, res) => {
                     <p style="font-size: 12px; color: #666;">If you did not request this, please ignore this email.</p>
                 </div>
             `
-        });
+    });
 
-        res.json({ success: true, message: "OTP sent to email." });
+    res.json({ success: true, message: "OTP sent to email." });
 
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Failed to send email." });
-    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Failed to send email." });
+  }
 });
 
 app.post("/api/forgot/verify-otp", (req, res) => {
-    const { email, otp } = req.body;
-    if (req.session.resetEmail === email && req.session.resetOtp === otp) {
-        res.json({ success: true, message: "OTP Verified" });
-    } else {
-        res.status(401).json({ success: false, message: "Invalid or expired OTP." });
-    }
+  const { email, otp } = req.body;
+  if (req.session.resetEmail === email && req.session.resetOtp === otp) {
+    res.json({ success: true, message: "OTP Verified" });
+  } else {
+    res.status(401).json({ success: false, message: "Invalid or expired OTP." });
+  }
 });
 
 app.post("/api/forgot/reset-password", async (req, res) => {
-    const { email, newPassword } = req.body;
-    try {
-        if (!req.session.resetEmail || req.session.resetEmail !== email) {
-            return res.status(403).json({ success: false, message: "Unauthorized request." });
-        }
-
-        const user = await Info.findOne({ email });
-        user.password = newPassword;
-        user.cnfpassword = newPassword;
-        await user.save();
-
-        req.session.resetEmail = null;
-        req.session.resetOtp = null;
-
-        res.json({ success: true, message: "Password updated successfully." });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Could not update password." });
+  const { email, newPassword } = req.body;
+  try {
+    if (!req.session.resetEmail || req.session.resetEmail !== email) {
+      return res.status(403).json({ success: false, message: "Unauthorized request." });
     }
+
+    const user = await Info.findOne({ email });
+    user.password = newPassword;
+    user.cnfpassword = newPassword;
+    await user.save();
+
+    req.session.resetEmail = null;
+    req.session.resetOtp = null;
+
+    res.json({ success: true, message: "Password updated successfully." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Could not update password." });
+  }
 });
 
 app.post('/api/login', async (req, res) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    try {
-        const user = await Info.findOne({ email });
+  try {
+    const user = await Info.findOne({ email });
 
-        if (!user) {
-            return res.status(401).json({ success: false, message: "Account not found." });
-        }
-        
-        // 🔴 Google Auth Rejection Logic 🔴
-        if (!user.password) {
-            return res.status(403).json({ 
-                success: false, 
-                message: "You originally mapped this account exclusively with Google. Please click 'Continue with Google' below ⬇️" 
-            });
-        }
-
-        if (password !== user.password) {
-            return res.status(401).json({ success: false, message: "Incorrect password." });
-        }
-        
-        req.session.firstName = user.firstname;
-        req.session.profilePic = user.profilePic;
-        res.json({ success: true, redirectUrl: '/' });
-        
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ success: false, message: "Server error during login." });
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Account not found." });
     }
+
+    // 🔴 Google Auth Rejection Logic 🔴
+    if (!user.password) {
+      return res.status(403).json({
+        success: false,
+        message: "You originally mapped this account exclusively with Google. Please click 'Continue with Google' below ⬇️"
+      });
+    }
+
+    if (password !== user.password) {
+      return res.status(401).json({ success: false, message: "Incorrect password." });
+    }
+
+    req.session.firstName = user.firstname;
+    req.session.profilePic = user.profilePic;
+    res.json({ success: true, redirectUrl: '/' });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ success: false, message: "Server error during login." });
+  }
 });
 
 // Logout route
