@@ -42,6 +42,12 @@ app.set("views", template_path);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Allow Google popups by relaxing the Cross-Origin-Opener-Policy
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  next();
+});
+
 app.use(session({
   secret: 'yourSuperSecretKeyHere',
   resave: false,
