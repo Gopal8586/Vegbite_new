@@ -25,6 +25,7 @@ const session = require("express-session");
 
 require("./db/conn");
 const Cart = require('./models/cartModel');
+const Order = require('./models/orderModel');
 const Info = require("./models/Information");
 const { json } = require("express");
 const port = process.env.PORT || 8998;
@@ -113,6 +114,7 @@ app.post("/api/auth/google", async (req, res) => {
 
     req.session.firstName = user.firstname;
     req.session.profilePic = user.profilePic;
+    req.session.email = user.email;
     res.json({ success: true, redirectUrl: '/' });
 
   } catch (error) {
@@ -232,6 +234,7 @@ app.post("/api/verify-otp-and-signup", async (req, res) => {
 
     await Entries.save();
     req.session.firstName = pending.firstname;
+    req.session.email = pending.email;
     delete req.session.pendingSignup;
 
     res.json({ success: true, message: "Registration successful!", redirectUrl: "/" });
@@ -360,6 +363,7 @@ app.post('/api/login', async (req, res) => {
 
     req.session.firstName = user.firstname;
     req.session.profilePic = user.profilePic;
+    req.session.email = user.email;
     res.json({ success: true, redirectUrl: '/' });
 
   } catch (error) {
@@ -379,10 +383,76 @@ app.get('/logout', (req, res) => {
   });
 });
 
+// --- NEW PAGES ---
+app.get("/account", async (req, res) => {
+  if (!req.session.email) {
+    return res.redirect("/login");
+  }
+  const user = await Info.findOne({ email: req.session.email });
+  res.render("account", { user });
+});
+
+app.get("/orders", async (req, res) => {
+  if (!req.session.email) {
+    return res.redirect("/login");
+  }
+  try {
+    const user = await Info.findOne({ email: req.session.email });
+    const orders = await Order.find({ userEmail: req.session.email }).sort({ createdAt: -1 }).lean();
+    
+    const formattedOrders = orders.map(order => ({
+      ...order,
+      formattedDate: new Date(order.createdAt).toLocaleDateString('en-IN', { 
+        year: 'numeric', month: 'long', day: 'numeric' 
+      }),
+      itemsList: order.items.map(i => `${i.quantity}x ${i.itemName}`).join(', ')
+    }));
+
+    res.render("orders", { user, orders: formattedOrders });
+  } catch (err) {
+    console.error("Error fetching orders:", err);
+    res.render("orders", { user: null, orders: [] });
+  }
+});
+
+app.post("/saveOrder", async (req, res) => {
+  if (!req.session.email) {
+    return res.status(401).json({ success: false, message: "Not logged in" });
+  }
+  
+  try {
+    const { items, totals } = req.body;
+    const newOrder = new Order({
+      userEmail: req.session.email,
+      items: items.map(item => ({
+        itemName: item.name,
+        quantity: item.quantity,
+        price: parseFloat(item.price)
+      })),
+      totalAmount: parseFloat(totals.grandTotal),
+      status: 'Pending'
+    });
+    
+    await newOrder.save();
+    res.json({ success: true, message: "Order placed successfully" });
+  } catch (error) {
+    console.error("Error saving order:", error);
+    res.status(500).json({ success: false, message: "Failed to place order" });
+  }
+});
+
+app.get("/support", (req, res) => {
+  res.render("support");
+});
+
 // Auth status API — used by menu.js to guard the cart before adding items
 app.get('/api/auth-status', (req, res) => {
   if (req.session && req.session.firstName) {
-    res.json({ loggedIn: true, name: req.session.firstName });
+    res.json({ 
+      loggedIn: true, 
+      name: req.session.firstName,
+      profilePic: req.session.profilePic 
+    });
   } else {
     res.json({ loggedIn: false });
   }

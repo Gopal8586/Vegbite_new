@@ -26,7 +26,7 @@
 
       <!-- Navbar Actions -->
       <div class="navbar-actions">
-        <a href="/html/cart2.html" class="navbar-cart">
+        <a href="/html/modern-cart.html" class="navbar-cart">
           <i class="fas fa-shopping-cart cart-icon"></i>
           <span class="cart-count" id="cart-count">0</span>
         </a>
@@ -98,7 +98,7 @@
 
   <!-- Mobile Menu Footer -->
   <div class="mobile-menu-footer">
-    <a href="/html/cart2.html" class="mobile-menu-cart">
+    <a href="/html/modern-cart.html" class="mobile-menu-cart">
       <div class="cart-info">
         <i class="fas fa-shopping-cart"></i>
         <span>View Cart</span>
@@ -165,6 +165,27 @@ document.addEventListener('DOMContentLoaded', function() {
       updateCartCount();
     }
   });
+
+  // Check Auth Status and update Login button to My Account
+  fetch('/api/auth-status')
+    .then(response => response.json())
+    .then(data => {
+      if (data.loggedIn) {
+        const desktopLoginBtn = document.querySelector('.navbar-login');
+        if (desktopLoginBtn) {
+          desktopLoginBtn.textContent = 'My Account';
+          desktopLoginBtn.href = '/account';
+          desktopLoginBtn.innerHTML = '<i class="fas fa-user-circle" style="margin-right: 5px;"></i> My Account';
+        }
+
+        const mobileLoginBtn = document.querySelector('.mobile-menu-login');
+        if (mobileLoginBtn) {
+          mobileLoginBtn.innerHTML = '<i class="fas fa-user-circle"></i> My Account';
+          mobileLoginBtn.href = '/account';
+        }
+      }
+    })
+    .catch(err => console.error("Error fetching auth status:", err));
   
   // Update active nav link based on current page
   const currentPath = window.location.pathname;

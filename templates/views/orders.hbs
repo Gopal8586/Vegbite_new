@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order History - VegBites</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #f0fdf4; min-height: 100vh; }
+        
+        .navbar { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .logo { font-size: 24px; font-weight: 700; color: #10b981; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .logo i { font-size: 28px; }
+        .nav-links a { margin-left: 20px; text-decoration: none; color: #374151; font-weight: 500; transition: color 0.3s; }
+        .nav-links a:hover { color: #10b981; }
+        
+        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.1); }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+        .title { font-size: 28px; font-weight: 700; color: #111827; }
+        
+        .empty-state { text-align: center; padding: 60px 20px; }
+        .empty-icon { font-size: 60px; color: #a7f3d0; margin-bottom: 20px; }
+        .empty-text { font-size: 18px; color: #6b7280; margin-bottom: 30px; }
+        
+        .btn { padding: 12px 25px; border-radius: 10px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; }
+        .btn-primary { background: #10b981; color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .btn-primary:hover { background: #059669; transform: translateY(-2px); }
+        .btn-outline { background: transparent; color: #10b981; border: 2px solid #10b981; }
+        .btn-outline:hover { background: #f0fdf4; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo"><i class="fas fa-leaf"></i> VegBites</a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/html/menu.html">Menu</a>
+            <a href="/account">My Account</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1 class="title">My Orders</h1>
+                <a href="/account" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back to Account</a>
+            </div>
+            
+            {{#if orders.length}}
+                <div class="orders-list">
+                    {{#each orders}}
+                    <div class="order-card" style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: #fafafa;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 15px;">
+                            <div>
+                                <h3 style="color: #111827; font-size: 1.1rem; margin-bottom: 5px;">Order Placed</h3>
+                                <p style="color: #6b7280; font-size: 0.9rem;">{{this.formattedDate}}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <h3 style="color: #111827; font-size: 1.1rem; margin-bottom: 5px;">Total</h3>
+                                <p style="color: #10b981; font-weight: 700; font-size: 1.1rem;">₹{{this.totalAmount}}</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="flex: 1;">
+                                <p style="color: #4b5563; font-size: 0.95rem; line-height: 1.5; font-weight: 500;">
+                                    <i class="fas fa-box" style="color: #10b981; margin-right: 8px;"></i>
+                                    {{this.itemsList}}
+                                </p>
+                            </div>
+                            <div style="margin-left: 20px;">
+                                <span style="display: inline-block; padding: 6px 14px; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;">
+                                    {{this.status}}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            {{else}}
+                <div class="empty-state">
+                    <i class="fas fa-shopping-bag empty-icon"></i>
+                    <h2 style="color: #374151; margin-bottom: 10px;">No orders yet</h2>
+                    <p class="empty-text">Looks like you haven't made your first order yet. The freshest vegetarian food is waiting for you!</p>
+                    <a href="/html/menu.html" class="btn btn-primary"><i class="fas fa-utensils"></i> Browse Menu</a>
+                </div>
+            {{/if}}
+        </div>
+    </div>
+</body>
+</html>

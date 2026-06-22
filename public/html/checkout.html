@@ -598,7 +598,7 @@
     <!-- Header -->
     <header class="checkout-header">
         <div class="header-left">
-            <a href="/html/cart2.html" class="back-btn">
+            <a href="/html/modern-cart.html" class="back-btn">
                 <i class="fas fa-arrow-left"></i>
                 <span>Back to Cart</span>
             </a>
@@ -936,7 +936,7 @@
 
         // Function to save order to database
         function saveOrderToDatabase(orderData) {
-            fetch('http://localhost:3000/saveOrder', {
+            fetch('/saveOrder', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

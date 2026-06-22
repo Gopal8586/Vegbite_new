@@ -130,21 +130,21 @@ document.addEventListener("DOMContentLoaded", function () {
           </li>
           <li><hr class="dropdown-divider"></li>
           <li>
-            <a href="#">
+            <a href="/account">
               <span class="icon-circle"><i class="fas fa-user"></i></span>
               <span class="menu-text">Account Info</span>
               <i class="fas fa-chevron-right chevron"></i>
             </a>
           </li>
           <li>
-            <a href="#">
+            <a href="/orders">
               <span class="icon-circle"><i class="fas fa-box"></i></span>
               <span class="menu-text">Order History</span>
               <i class="fas fa-chevron-right chevron"></i>
             </a>
           </li>
           <li>
-            <a href="#">
+            <a href="/support">
               <span class="icon-circle"><i class="fas fa-headset"></i></span>
               <span class="menu-text">Support</span>
               <i class="fas fa-chevron-right chevron"></i>
@@ -203,4 +203,53 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 })();
 
+// --- Floating Global Cart ---
+document.addEventListener("DOMContentLoaded", function() {
+  // Only inject if it doesn't already exist and we're not on the cart page itself
+  if (!document.getElementById('global-floating-cart') && !window.location.pathname.toLowerCase().includes('cart')) {
+    const floatingCart = document.createElement('a');
+    floatingCart.id = 'global-floating-cart';
+    floatingCart.href = '/html/modern-cart.html';
+    floatingCart.style.cssText = 'position: fixed; bottom: 30px; right: 30px; background: #1b5e20; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 9999; text-decoration: none; transition: transform 0.2s;';
+    
+    floatingCart.innerHTML = `
+      <i class="fas fa-shopping-cart"></i>
+      <span class="global-cart-badge" style="position: absolute; top: -5px; right: -5px; background: #ff4757; color: white; border-radius: 50%; padding: 4px 8px; font-size: 14px; font-weight: bold; border: 2px solid white;">0</span>
+    `;
+    
+    // Add hover effect
+    floatingCart.onmouseover = () => floatingCart.style.transform = 'scale(1.1)';
+    floatingCart.onmouseout = () => floatingCart.style.transform = 'scale(1)';
+    
+    document.body.appendChild(floatingCart);
+  }
 
+  function updateAllCartCounts() {
+    let cart = [];
+    try {
+      cart = JSON.parse(localStorage.getItem('cart')) || [];
+    } catch(e) {}
+    let totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+    
+    document.querySelectorAll('.global-cart-badge, .cart-count').forEach(badge => {
+      badge.textContent = totalItems;
+    });
+  }
+
+  // Update immediately
+  updateAllCartCounts();
+
+  // Listen to storage events (cross-tab)
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'cart') {
+      updateAllCartCounts();
+    }
+  });
+
+  // Intercept Add to Cart clicks to update the global count immediately
+  document.body.addEventListener('click', function(e) {
+    if (e.target.classList.contains('add-to-cart-btn') || e.target.closest('.add-to-cart-btn')) {
+      setTimeout(updateAllCartCounts, 100);
+    }
+  });
+});
