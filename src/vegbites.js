@@ -21,7 +21,8 @@ const path = require("path");
 const app = express();
 const hbs = require("hbs");
 const async = require("hbs/lib/async");
-const session = require("express-session");
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
 
 require("./db/conn");
 const Cart = require('./models/cartModel');
@@ -51,9 +52,13 @@ app.use((req, res, next) => {
 app.use(session({
   secret: 'yourSuperSecretKeyHere',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: "mongodb+srv://shivitripathi2511:Zero%402511@cluster1.piutcpz.mongodb.net/?appName=Cluster1",
+    collectionName: 'sessions'
+  }),
   cookie: {
-    maxAge: 1000 * 60 * 60,
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
     secure: false
   }
 }));
