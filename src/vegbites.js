@@ -22,7 +22,7 @@ const app = express();
 const hbs = require("hbs");
 const async = require("hbs/lib/async");
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const MongoStore = require('connect-mongo').default;
 
 require("./db/conn");
 const Cart = require('./models/cartModel');
